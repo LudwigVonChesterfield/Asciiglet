@@ -1,0 +1,1 @@
+import asciiglet.examples.rocket
