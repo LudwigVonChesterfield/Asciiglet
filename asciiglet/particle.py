@@ -19,6 +19,8 @@ class Particle(GameObject):
 
     def __destroy__(self):
         for effect in self.effects:
+            if effect.destroying:
+                continue
             effect.destroy()
         self.effects = []
 
@@ -33,6 +35,11 @@ class Particle(GameObject):
 
         for effect in self.effects:
             effect.apply(self, dt)
+            if self.destroying:
+                return
+
+            if effect.destroying:
+                self.effects.remove(effect)
 
         self.velocity += self.m_acceleration * dt
         self.transform.pos += self.m_velocity * dt
@@ -48,6 +55,10 @@ class Particle(GameObject):
                 self.transform.forward(), self.velocity
             ) * dt
         """
+
+    def add_effect(self, effect):
+        effect.particle = self
+        self.effects.append(effect)
 
     @property
     def m_velocity(self):

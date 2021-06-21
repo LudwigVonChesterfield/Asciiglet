@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="asciiglet",
-    version="1.0.1",
+    version="1.0.3",
     description="Asciiglet. For when you need to draw with text.",
     long_description=README,
     long_description_content_type="text/markdown",

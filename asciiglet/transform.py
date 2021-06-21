@@ -75,10 +75,10 @@ class Transform(AbstractObject):
         return Vector.rotate(Vector.new(1.0, 0.0), self.angle)
 
     def face(self, transform):
-        f = self.forward()
-        dpos = transform.pos - self.pos
+        forward = self.forward()
+        target = transform.pos - self.pos
 
-        face_angle = Vector.angleRotateTo(f, dpos)
+        face_angle = Vector.angleRotateTo(forward, target)
         self.angle += face_angle
 
     def copy(self):

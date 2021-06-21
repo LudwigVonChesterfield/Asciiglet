@@ -16,6 +16,7 @@ class Sprite:
         "PINK": (255, 105, 180, 255),
         "SIENNA": (160, 82, 45, 255),
         "BLUE": (0, 0, 255, 255),
+        "PURPLE": (255, 0, 255, 255),
     }
 
     def __init__(self, sprite):
@@ -25,9 +26,13 @@ class Sprite:
             self.sprite,
             font_name='Consolas',
             font_size=13,
-            anchor_x='center',
+            anchor_x='right',
             anchor_y='center'
         )
+
+        self._color = "WHITE"
+
+        self.color = self._color
 
     def render(self, transform):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
@@ -44,7 +49,13 @@ class Sprite:
     def set_sprite(self, new_sprite):
         self.label.text = new_sprite
 
-    def set_color(self, color):
-        if type(color) is str:
-            color = self.colors[color]
-        self.label.color = color
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        if type(value) is str:
+            value = self.colors[value]
+        self._color = value
+        self.label.color = value

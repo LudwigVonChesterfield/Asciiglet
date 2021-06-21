@@ -10,7 +10,7 @@ from asciiglet.vector import Vector
 from asciiglet.particle_effect import *
 
 
-e = Environment()
+environment = Environment()
 
 for i in range(30):
     x = random.uniform(0, 1024)
@@ -32,8 +32,9 @@ for i in range(30):
 
     p = Particle(sprite=symbol, transform=Transform(pos=Vector.new(x, y), scale=scale))
     p.name = symbol + str(i)
-    p.effects.append(ChargedPE(p, weight=mass, charges={"electricity": charge}))
+    p.add_effect(ChargedPE(weight=mass, charges={"electricity": charge}))
 
-    e.particles.append(p)
+    environment.particles.append(p)
 
-e.run()
+if __name__ == "__main__":
+    environment.run()

@@ -9,6 +9,9 @@ class Environment:
 
         self.particles = []
 
+        self.halt_after = -1
+        self.iteration = 0
+
     def create_event_loop(self, *args, **kwargs):
         e = pyglet.app.EventLoop(*args, **kwargs)
 
@@ -29,7 +32,7 @@ class Environment:
 
         return w
 
-    def run(self):
+    def run(self, halt_after=-1):
         """
         while True:
             dt = pyglet.clock.tick()
@@ -44,7 +47,15 @@ class Environment:
                 particle.update(dt)
         """
         def u(dt, interval):
+            self.iteration += 1
+            if self.halt_after > 0 and self.iteration > self.halt_after:
+                self.window.close()
+                self.event_loop.exit()
+                pyglet.clock.unschedule(u)
+                return
             self.update(dt)
+
+        self.halt_after = halt_after
 
         pyglet.clock.schedule(u, .05)
         pyglet.app.run()

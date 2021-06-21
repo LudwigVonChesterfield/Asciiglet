@@ -4,12 +4,13 @@ import numpy as np
 
 from .abstract_object import AbstractObject
 from .vector import Vector
+from .emitter import Emitter
 
 
 class ParticleEffect(AbstractObject):
-    def __init__(self, particle):
+    def __init__(self):
         super().__init__()
-        self.particle = particle
+        self.particle = None
 
         self.velocity = Vector.new(0, 0)
         self.acceleration = Vector.new(0.0, 0.0)
@@ -21,6 +22,14 @@ class ParticleEffect(AbstractObject):
         self.particle = None
         super().__destroy__()
 
+    @property
+    def particle(self):
+        return self._particle
+
+    @particle.setter
+    def particle(self, value):
+        self._particle = value
+
     def apply(self, particle, dt):
         pass
 
@@ -28,8 +37,8 @@ class ParticleEffect(AbstractObject):
 class GravityPE(ParticleEffect):
     bodies = []
 
-    def __init__(self, particle, weight=1.0):
-        super().__init__(particle)
+    def __init__(self, weight=1.0):
+        super().__init__()
         self.weight = weight
         GravityPE.bodies.append(self)
 
@@ -54,8 +63,8 @@ class GravityPE(ParticleEffect):
 class ChargedPE(ParticleEffect):
     bodies = []
 
-    def __init__(self, particle, weight=1.0, charges={}):
-        super().__init__(particle)
+    def __init__(self, weight=1.0, charges={}):
+        super().__init__()
         self.weight = weight
         self.charges = charges
         ChargedPE.bodies.append(self)
@@ -87,18 +96,21 @@ class ChargedPE(ParticleEffect):
 class DissipatePE(ParticleEffect):
     def __init__(
         self,
-        particle,
         sprites="@ao*.",
-        amount=1,
+        amount=None,
+        max_amount=1,
         loss=0.0,
         loss_perc=0.0
     ):
-        super().__init__(particle)
+        super().__init__()
 
         self.sprites = sprites
 
+        if amount is None:
+            amount = max_amount
+
         self.amount = amount
-        self.max_amount = amount
+        self.max_amount = max_amount
 
         self.loss = loss
         self.loss_perc = loss_perc
@@ -123,13 +135,49 @@ class DissipatePE(ParticleEffect):
 
 
 class EmitPE(ParticleEffect):
-    def __init__(self, particle, particles):
-        super().__init__(particle)
+    def __init__(self, environment, particles):
+        super().__init__()
+        self.environment = environment
         self.particles = particles
+
+    def __destroy__(self):
+        self.environment = None
+        super().__destroy__()
 
     def apply(self, particle, dt):
         for particle in self.particles(self):
             self.environment.particles.append(particle)
+
+
+class SpawnEmitterPE(ParticleEffect):
+    def __init__(
+        self,
+        environment,
+        particles,
+        cooldown=1,
+        to_live=-1
+    ):
+        super().__init__()
+        self.environment = environment
+        self.particles = particles
+
+        self.cooldown = cooldown
+        self.to_live = to_live
+
+    def __destroy__(self):
+        self.environment = None
+        super().__destroy__()
+
+    def apply(self, particle, dt):
+        t = particle.transform.copy()
+        e = Emitter(
+            self.environment,
+            transform=t,
+            particles=self.particles,
+            cooldown=self.cooldown,
+            to_live=self.to_live
+        )
+        self.environment.particles.append(e)
 
 
 class TimedPE(ParticleEffect):
@@ -139,22 +187,22 @@ class TimedPE(ParticleEffect):
 
     def __init__(
         self,
-        particle,
         effect,
         time=1.0,
     ):
-        super().__init__(particle)
-
         self.effect = effect
+        super().__init__()
         self.time = time
 
-    def __destroy__(self):
-        self.effect.destroy()
+    @ParticleEffect.particle.setter
+    def particle(self, value):
+        self._particle = value
+        self.effect.particle = value
 
     def apply(self, particle, dt):
         self.time -= dt
         if self.time <= 0:
-            particle.effects.append(self.effect)
+            particle.add_effect(self.effect)
             self.destroy()
 
 
@@ -165,17 +213,21 @@ class LastingPE(ParticleEffect):
 
     def __init__(
         self,
-        particle,
         effect,
         time=1.0,
     ):
-        super().__init__(particle)
-
         self.effect = effect
+        super().__init__()
         self.time = time
 
     def __destroy__(self):
         self.effect.destroy()
+        super().__destroy__()
+
+    @ParticleEffect.particle.setter
+    def particle(self, value):
+        self._particle = value
+        self.effect.particle = value
 
     def apply(self, particle, dt):
         self.effect.apply(particle, dt)
@@ -192,18 +244,22 @@ class CooldownPE(ParticleEffect):
 
     def __init__(
         self,
-        particle,
         effect,
         time=1.0,
     ):
-        super().__init__(particle)
-
         self.effect = effect
+        super().__init__()
         self.time = time
         self.max_time = time
 
     def __destroy__(self):
         self.effect.destroy()
+        super().__destroy__()
+
+    @ParticleEffect.particle.setter
+    def particle(self, value):
+        self._particle = value
+        self.effect.particle = value
 
     def apply(self, particle, dt):
         self.time -= dt
@@ -217,20 +273,58 @@ class FaceMovementPE(ParticleEffect):
     Changes angle to face velocity.
     """
 
-    def __init__(
-        self,
-        particle,
-        turn_speed=1.0,
-    ):
-        super().__init__(particle)
+    def __init__(self, turn_speed=1.0):
+        super().__init__()
 
         self.turn_speed = turn_speed
 
     def apply(self, particle, dt):
         if particle.velocity[0] != 0 or particle.velocity[1] != 0:
-            angle = Vector.angleRotateTo(
-                particle.transform.forward(), particle.velocity
-            )
             self.rotation = Vector.angleRotateTo(
                 particle.transform.forward(), particle.velocity
             ) * self.turn_speed * dt
+
+
+class ForwardMovementPE(ParticleEffect):
+    """
+    Applied acceleration in the forward direction.
+    """
+
+    def __init__(self, forward_velocity=0.0, forward_acceleration=0.0):
+        super().__init__()
+
+        self.forward_velocity = forward_velocity
+        self.forward_acceleration = forward_acceleration
+
+    def apply(self, particle, dt):
+        self.velocity = particle.transform.forward() * self.forward_velocity
+        self.acceleration = (
+            particle.transform.forward() * self.forward_acceleration
+        )
+
+
+class OnDestroyPE(ParticleEffect):
+    """
+    Issues *effect* when particle is destroyed.
+    """
+
+    def __init__(
+        self,
+        effect,
+    ):
+        self.effect = effect
+        super().__init__()
+        self.dt = 0
+
+    def __destroy__(self):
+        self.effect.apply(self.particle, self.dt)
+        self.effect.destroy()
+        super().__destroy__()
+
+    @ParticleEffect.particle.setter
+    def particle(self, value):
+        self._particle = value
+        self.effect.particle = value
+
+    def apply(self, particle, dt):
+        self.dt = dt
