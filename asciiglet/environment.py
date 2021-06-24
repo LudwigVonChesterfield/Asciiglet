@@ -1,9 +1,20 @@
 import pyglet
 
+from .transform import Transform
+from .vector import Vector
+
 
 class Environment:
-    def __init__(self):
-        self.window = self.create_window(width=1024, height=720)
+    def __init__(self, max_x=1024, max_y=720, width=1024, height=720):
+        self.window = self.create_window(width=width, height=height)
+
+        scale_x = width / max_x
+        scale_y = height / max_y
+
+        self.center = Vector.new(max_x * 0.5, max_y * 0.5)
+        self.origin = Vector.new(0.0, 0.0)
+
+        self.transform = Transform(scale=Vector.new(scale_x, scale_y))
 
         self.event_loop = self.create_event_loop()
 
@@ -11,6 +22,8 @@ class Environment:
 
         self.halt_after = -1
         self.iteration = 0
+
+        self.on_update = None
 
     def create_event_loop(self, *args, **kwargs):
         e = pyglet.app.EventLoop(*args, **kwargs)
@@ -32,7 +45,7 @@ class Environment:
 
         return w
 
-    def run(self, halt_after=-1):
+    def run(self, halt_after=-1, on_update=None):
         """
         while True:
             dt = pyglet.clock.tick()
@@ -53,16 +66,22 @@ class Environment:
                 self.event_loop.exit()
                 pyglet.clock.unschedule(u)
                 return
+
             self.update(dt)
 
         self.halt_after = halt_after
+
+        self.on_update = on_update
 
         pyglet.clock.schedule(u, .05)
         pyglet.app.run()
 
     def update(self, dt):
+        if self.on_update is not None:
+            self.on_update(self, dt)
+
         for particle in self.particles:
-            particle.update(dt)
+            particle.update(self, dt)
             if particle.destroying:
                 self.particles.remove(particle)
 
@@ -71,4 +90,4 @@ class Environment:
         pyglet.gl.glLoadIdentity()
 
         for particle in self.particles:
-            particle.draw()
+            particle.draw(self, self.iteration)

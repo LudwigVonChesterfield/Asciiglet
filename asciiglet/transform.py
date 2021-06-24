@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from .vector import Vector
@@ -51,7 +53,7 @@ class Transform(AbstractObject):
 
     @angle.setter
     def angle(self, value):
-        self._angle = value
+        self._angle = math.fmod(value, 360.0)
 
     @property
     def scale(self):
@@ -87,3 +89,15 @@ class Transform(AbstractObject):
             np.copy(self.angle),
             np.copy(self.scale)
         )
+
+    def from_perspective(self, transform, origin=Vector.new(0.0, 0.0)):
+        """
+        Output how self would look like, if transform was it's perspective.
+        """
+        pos = Vector.rotate(
+            self.pos * transform.scale, transform.angle, origin=origin
+        ) + transform.pos
+        scale = self.scale * transform.scale
+        angle = self.angle + transform.angle
+
+        return Transform(pos=pos, scale=scale, angle=angle)

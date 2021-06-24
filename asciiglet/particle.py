@@ -30,11 +30,11 @@ class Particle(GameObject):
         self.destroying = True
         self.__destroy__()
 
-    def update(self, dt):
+    def update(self, environment, dt):
         super().update(dt)
 
         for effect in self.effects:
-            effect.apply(self, dt)
+            effect.apply(self, environment, dt)
             if self.destroying:
                 return
 
@@ -46,15 +46,6 @@ class Particle(GameObject):
 
         self.rotation += self.m_rotation_acceleration * dt
         self.transform.angle += self.m_rotation * dt
-
-        """
-        Face where you are going.
-
-        if self.velocity[0] != 0 or self.velocity[1] != 0:
-            self.transform.angle += Vector.angleRotateTo(
-                self.transform.forward(), self.velocity
-            ) * dt
-        """
 
     def add_effect(self, effect):
         effect.particle = self
@@ -88,5 +79,5 @@ class Particle(GameObject):
             ra += effect.rotation_acceleration
         return self.rotation_acceleration + ra
 
-    def draw(self):
-        self.sprite.render(self.transform)
+    def draw(self, environment, global_frame):
+        self.sprite.render(environment, global_frame, self.transform)

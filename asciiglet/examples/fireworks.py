@@ -2,15 +2,13 @@ import random
 
 import numpy as np
 
-from asciiglet.environment import Environment
-from asciiglet.particle import Particle
-from asciiglet.transform import Transform
-from asciiglet.emitter import Emitter
-from asciiglet.vector import Vector
-from asciiglet.particle_effect import *
+from asciiglet import *
 
 
-environment = Environment()
+random.seed(42)
+
+
+environment = Environment(max_x=1024, max_y=720, width=1024, height=720)
 
 
 def get_blazetrail(pe):
@@ -29,6 +27,7 @@ def get_blazetrail(pe):
     p.acceleration[1] = random.uniform(-3.0, -5.0)
 
     return [p]
+
 
 def get_trailblazer(pe):
     palettes = [
@@ -75,7 +74,6 @@ def get_trailblazer(pe):
         p.add_effect(
             CooldownPE(
                 EmitPE(
-                    environment,
                     particles=get_blazetrail,
                 ),
                 time=0.6,
@@ -86,6 +84,7 @@ def get_trailblazer(pe):
         explosion_particles.append(p)
 
     return explosion_particles
+
 
 def get_ball(pe):
     palettes = [
@@ -135,8 +134,6 @@ def get_ball(pe):
 
 
 def get_explosion(pe):
-    explosion_particles = []
-
     expl_type = random.choice([get_ball, get_trailblazer])
 
     return expl_type(pe)
@@ -156,11 +153,13 @@ def get_trail(pe):
         )
         p = Particle(transform=t)
 
+        p.transform.pos -= pe.particle.transform.forward() * 12
+
         noise = Vector.new(
             random.uniform(-10.0, 10.0), random.uniform(-10.0, 10.0)
         )
 
-        p.velocity = pe.particle.transform.forward() * -24 + noise
+        p.velocity = (pe.particle.transform.forward() * -24) + noise
 
         p.acceleration = Vector.new(
             random.uniform(-15.0, 15.0), random.uniform(-15.0, 15.0)
@@ -199,8 +198,18 @@ def get_fireworks(emitter):
         )
         p = Particle(transform=t, sprite="---@>")
 
+        p.sprite.set_anchor_x("right")
+
         p.sprite.color = random.choice([
-            "RED", "ORANGE", "YELLOW", "GREEN", "CYAN", "BLUE", "PURPLE", "PINK", "WHITE"
+            "RED",
+            "ORANGE",
+            "YELLOW",
+            "GREEN",
+            "CYAN",
+            "BLUE",
+            "PURPLE",
+            "PINK",
+            "WHITE"
         ])
 
         p.transform.angle = random.uniform(80.0, 100.0)
@@ -208,7 +217,10 @@ def get_fireworks(emitter):
         p.rotation = random.uniform(-1.0, 1.0)
         p.rotation_acceleration = random.uniform(-1.0, 1.0)
 
-        p.velocity = Vector.new(random.uniform(-5.0, 5.0), random.uniform(-5.0, 5.0))
+        p.velocity = Vector.new(
+            random.uniform(-5.0, 5.0),
+            random.uniform(-5.0, 5.0)
+        )
 
         p.add_effect(
             DissipatePE(
@@ -220,29 +232,33 @@ def get_fireworks(emitter):
         p.add_effect(
             CooldownPE(
                 EmitPE(
-                    environment,
                     particles=get_trail,
                 ),
-                time=0.1,
+                max_time=0.1,
             )
         )
 
         p.add_effect(
             OnDestroyPE(
                 EmitPE(
-                    environment,
                     particles=get_explosion,
                 ),
             )
         )
 
-        p.add_effect(ForwardMovementPE(forward_velocity=100.0, forward_acceleration=10.0))
+        p.add_effect(
+            ForwardMovementPE(
+                forward_velocity=100.0,
+                forward_acceleration=10.0
+            )
+        )
 
         fireworks.append(p)
 
     return fireworks
 
-e = Emitter(environment, particles=get_fireworks, cooldown=5)
+
+e = Emitter(particles=get_fireworks, cooldown=5)
 environment.particles.append(e)
 
 if __name__ == "__main__":

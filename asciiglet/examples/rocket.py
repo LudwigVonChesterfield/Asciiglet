@@ -2,15 +2,13 @@ import random
 
 import numpy as np
 
-from asciiglet.environment import Environment
-from asciiglet.particle import Particle
-from asciiglet.transform import Transform
-from asciiglet.emitter import Emitter
-from asciiglet.vector import Vector
-from asciiglet.particle_effect import *
+from asciiglet import *
 
 
-environment = Environment()
+random.seed(42)
+
+
+environment = Environment(max_x=1024, max_y=720, width=1024, height=720)
 
 p1 = Particle(
     transform=Transform(
@@ -52,7 +50,7 @@ def get_smoke(emitter):
     t = Transform(
         pos=np.copy(emitter.transform.pos), scale=np.array([size, size])
     )
-    t.pos -= emitter.transform.parent.forward() * 26
+    t.pos -= emitter.transform.parent.forward() * 14
 
     s = Particle(transform=t)
     s.velocity = vel
@@ -63,7 +61,7 @@ def get_smoke(emitter):
     return [s]
 
 
-e3 = Emitter(environment, particles=get_smoke, cooldown=0.1)
+e3 = Emitter(particles=get_smoke, cooldown=0.01)
 e3.transform.setParent(t3)
 
 environment.particles.extend([p1, p2, p3, e3])
