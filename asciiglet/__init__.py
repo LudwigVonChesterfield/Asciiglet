@@ -1,16 +1,16 @@
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
-from asciiglet.environment import Environment
+from .environment import Environment
 
-from asciiglet.vector import *
+from .vector import *
 
-from asciiglet.transform import *
+from .transform import *
 
-from asciiglet.particle import Particle
-from asciiglet.particle_effect import *
+from .particle import Particle
+from .particle_effect import *
 
-from asciiglet.emitter import Emitter
+from .emitter import Emitter
 
-from asciiglet.sprite import Sprite
+from .sprite import Sprite
 
-from asciiglet.examples import *
+from .examples import *

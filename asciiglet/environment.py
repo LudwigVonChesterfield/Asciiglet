@@ -8,6 +8,12 @@ class Environment:
     def __init__(self, max_x=1024, max_y=720, width=1024, height=720):
         self.window = self.create_window(width=width, height=height)
 
+        self.max_x = max_x
+        self.max_y = max_y
+
+        self.width = width
+        self.height = height
+
         scale_x = width / max_x
         scale_y = height / max_y
 
@@ -24,6 +30,25 @@ class Environment:
         self.iteration = 0
 
         self.on_update = None
+
+    def reset_scale(self):
+        self.transform.scale = self.window_size() / self.size()
+
+    def set_window_size(self, width, height):
+        self.width = width
+        self.height = height
+
+        self.window.set_size(width, height)
+
+    def set_size(self, max_x, max_y):
+        self.max_x = max_x
+        self.max_y = max_y
+
+    def window_size(self):
+        return Vector.new(self.width, self.height)
+
+    def size(self):
+        return Vector.new(self.max_x, self.max_y)
 
     def create_event_loop(self, *args, **kwargs):
         e = pyglet.app.EventLoop(*args, **kwargs)
@@ -59,7 +84,7 @@ class Environment:
             for particle in self.particles:
                 particle.update(dt)
         """
-        def u(dt, interval):
+        def u(dt):
             self.iteration += 1
             if self.halt_after > 0 and self.iteration > self.halt_after:
                 self.window.close()
@@ -73,7 +98,7 @@ class Environment:
 
         self.on_update = on_update
 
-        pyglet.clock.schedule(u, .05)
+        pyglet.clock.schedule_interval(u, 0.05)
         pyglet.app.run()
 
     def update(self, dt):
