@@ -5,8 +5,11 @@ from .vector import Vector
 
 
 class Environment:
-    def __init__(self, max_x=1024, max_y=720, width=1024, height=720):
-        self.window = self.create_window(width=width, height=height)
+    def __init__(self, max_x=1024, max_y=720, width=1024, height=720, window=None, event_loop=None):
+        if window is None:
+            self.window = self.create_window(width=width, height=height)
+        else:
+            self.window = window
 
         self.max_x = max_x
         self.max_y = max_y
@@ -22,7 +25,10 @@ class Environment:
 
         self.transform = Transform(scale=Vector.new(scale_x, scale_y))
 
-        self.event_loop = self.create_event_loop()
+        if event_loop is None:
+            self.event_loop = self.create_event_loop()
+        else:
+            self.event_loop = event_loop
 
         self.particles = []
 
