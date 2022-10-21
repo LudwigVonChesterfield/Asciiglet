@@ -660,3 +660,24 @@ class DecelerationPE(ParticleEffect):
 
             if speed < self.deceleration:
                 particle.velocity = Vector.new(0.0, 0.0)
+
+
+class FadingPE(ParticleEffect):
+    def __init__(self, fading_speed=1.0):
+        self.fading_time = 1.0
+        self.fading_speed = fading_speed
+
+    def apply(self, particle, environment, dt):
+        self.fading_time -= dt * self.fading_speed
+        if self.fading_time <= 0.0:
+            self.destroy()
+            return
+
+        r = self.particle.sprite.color[0]
+        g = self.particle.sprite.color[1]
+        b = self.particle.sprite.color[2]
+        a = int(self.particle.sprite.color[3] * self.fading_time)
+
+        new_color = (r, g, b, a)
+
+        self.particle.sprite.label.color = new_color
